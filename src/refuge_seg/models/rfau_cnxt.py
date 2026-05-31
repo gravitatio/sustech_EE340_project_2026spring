@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -36,6 +38,49 @@ class DecoderBlock(nn.Module):
         return self.conv(torch.cat([x, skip], dim=1))
 
 
+def remap_convnext_feature_keys(state_dict: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    """Convert original timm ConvNeXt keys to FeatureListNet wrapper keys."""
+    remapped = {}
+    for key, value in state_dict.items():
+        if key.startswith("head."):
+            continue
+        new_key = key
+        if new_key.startswith("stem."):
+            new_key = new_key.replace("stem.0.", "stem_0.", 1)
+            new_key = new_key.replace("stem.1.", "stem_1.", 1)
+        if new_key.startswith("stages."):
+            for stage_id in range(4):
+                new_key = new_key.replace(f"stages.{stage_id}.", f"stages_{stage_id}.", 1)
+        remapped[new_key] = value
+    return remapped
+
+
+def load_local_convnext_checkpoint(model: nn.Module, checkpoint_path: str) -> None:
+    path = Path(checkpoint_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Local checkpoint not found: {path}")
+
+    if path.suffix == ".safetensors":
+        try:
+            from safetensors.torch import load_file
+        except ImportError as exc:
+            raise ImportError("Loading .safetensors checkpoints requires safetensors. Run: pip install safetensors") from exc
+        state_dict = load_file(str(path))
+    else:
+        checkpoint = torch.load(path, map_location="cpu")
+        state_dict = checkpoint.get("state_dict", checkpoint.get("model", checkpoint))
+
+    state_dict = remap_convnext_feature_keys(state_dict)
+    incompatible = model.load_state_dict(state_dict, strict=False)
+    loaded = len(state_dict) - len(incompatible.unexpected_keys)
+    if loaded <= 0:
+        raise RuntimeError(f"No compatible ConvNeXt encoder weights were loaded from {path}")
+    print(
+        f"Loaded local encoder checkpoint from {path} "
+        f"({loaded} tensors, {len(incompatible.missing_keys)} missing, {len(incompatible.unexpected_keys)} unexpected)."
+    )
+
+
 class RFAUCNxtUNet(nn.Module):
     """RFAU-CNxt-style ConvNeXt encoder + attention UNet decoder.
 
@@ -62,8 +107,9 @@ class RFAUCNxtUNet(nn.Module):
             pretrained=pretrained,
             features_only=True,
             out_indices=(0, 1, 2, 3),
-            checkpoint_path=checkpoint_path or "",
         )
+        if checkpoint_path:
+            load_local_convnext_checkpoint(self.encoder, checkpoint_path)
         channels = self.encoder.feature_info.channels()
         self.center = ConvBlock(channels[-1], channels[-1])
         self.dec3 = DecoderBlock(channels[-1], channels[-2], channels[-2])
