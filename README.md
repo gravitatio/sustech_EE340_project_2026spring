@@ -129,6 +129,14 @@ PYTHONPATH=src python scripts/train.py --config configs/rfau_cnxt_large_ce_dice.
 outputs/rfau_cnxt_large_ce_dice/
 ```
 
+RFAU-CNxt 配置默认从项目根目录读取本地 ConvNeXt 权重：
+
+```text
+model.safetensors
+```
+
+该文件较大，不提交到 Git。训练前需要把它放到项目根目录；如果没有本地权重，可以把配置中的 `checkpoint_path` 删除，并将 `pretrained` 设为 `false` 从随机初始化训练。
+
 主要输出包括：
 
 - `best.pt`：验证集 Dice 最优 checkpoint
@@ -214,4 +222,3 @@ reports/dataset_preview.png
 ```
 
 正式训练完成后，将各实验的 `metrics.csv`、`curves.png` 和预测可视化结果填入报告中的结果表格和分析部分即可。
-

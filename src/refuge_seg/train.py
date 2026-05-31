@@ -25,6 +25,7 @@ def build_model(config: dict[str, Any]) -> torch.nn.Module:
             encoder_name=model_cfg.get("encoder_name", "convnext_large"),
             num_classes=model_cfg.get("num_classes", 3),
             pretrained=model_cfg.get("pretrained", True),
+            checkpoint_path=model_cfg.get("checkpoint_path"),
         )
     if name == "segformer":
         return SegFormerAdapter(
@@ -151,4 +152,3 @@ def _plot_curves(rows: list[dict[str, float]], path: Path) -> None:
     plt.tight_layout()
     plt.savefig(path, dpi=160)
     plt.close()
-

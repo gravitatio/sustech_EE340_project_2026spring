@@ -49,6 +49,7 @@ class RFAUCNxtUNet(nn.Module):
         encoder_name: str = "convnext_large",
         num_classes: int = 3,
         pretrained: bool = True,
+        checkpoint_path: str | None = None,
     ) -> None:
         super().__init__()
         try:
@@ -61,6 +62,7 @@ class RFAUCNxtUNet(nn.Module):
             pretrained=pretrained,
             features_only=True,
             out_indices=(0, 1, 2, 3),
+            checkpoint_path=checkpoint_path or "",
         )
         channels = self.encoder.feature_info.channels()
         self.center = ConvBlock(channels[-1], channels[-1])
@@ -78,4 +80,3 @@ class RFAUCNxtUNet(nn.Module):
         x = self.dec1(x, features[-4])
         logits = self.head(x)
         return F.interpolate(logits, size=input_size, mode="bilinear", align_corners=False)
-

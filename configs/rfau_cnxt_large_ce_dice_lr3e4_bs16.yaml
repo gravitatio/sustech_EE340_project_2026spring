@@ -5,7 +5,8 @@ model:
   name: rfau_cnxt
   encoder_name: convnext_large
   num_classes: 3
-  pretrained: true
+  pretrained: false
+  checkpoint_path: model.safetensors
 train:
   output_dir: outputs/rfau_cnxt_large_ce_dice_lr3e4_bs16
   device: cuda

@@ -16,6 +16,7 @@ env/
 *.pth
 *.ckpt
 *.onnx
+*.safetensors
 
 # OS/editor files
 .DS_Store
