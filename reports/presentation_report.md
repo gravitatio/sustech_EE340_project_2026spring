@@ -36,6 +36,8 @@ REFUGE 数据集包含眼底彩照和对应分割标签。本项目使用训练�
 
 ## 5. 实验设置
 
+本次最终训练使用 H100 GPU。H100 的显存和 Tensor Core 能力支持 ConvNeXt-Large 在 768 x 768 输入分辨率下进行训练；训练中开启 AMP 混合精度，以降低显存占用并提高吞吐。
+
 | 实验 | 模型 | Loss | 输入尺寸 | Epoch | Batch Size | LR | Scheduler |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
 | rfau_cnxt_large_ce | RFAU-CNxt-Large | Cross Entropy | 768 | 10 | 12 | 1e-4 | Cosine |
