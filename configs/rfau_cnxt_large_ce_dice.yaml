@@ -1,0 +1,22 @@
+data:
+  root: REFUGE
+  image_size: 768
+model:
+  name: rfau_cnxt
+  encoder_name: convnext_large
+  num_classes: 3
+  pretrained: true
+train:
+  output_dir: outputs/rfau_cnxt_large_ce_dice
+  device: cuda
+  epochs: 80
+  batch_size: 8
+  workers: 8
+  lr: 0.0001
+  weight_decay: 0.01
+  scheduler: cosine
+  loss: ce_dice
+  topology_weight: 0.05
+  amp: true
+eval:
+  output_dir: outputs/rfau_cnxt_large_ce_dice/predictions
