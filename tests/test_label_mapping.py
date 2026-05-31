@@ -1,7 +1,8 @@
 import numpy as np
+import torch
 import unittest
 
-from refuge_seg.data import mask_values_to_classes, classes_to_mask_values
+from refuge_seg.data import image_to_tensor, mask_values_to_classes, classes_to_mask_values
 
 
 class LabelMappingTests(unittest.TestCase):
@@ -26,3 +27,13 @@ class LabelMappingTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "Unexpected REFUGE label values"):
             mask_values_to_classes(mask)
+
+    def test_image_to_tensor_accepts_readonly_numpy_array(self):
+        image = np.zeros((2, 3, 3), dtype=np.uint8)
+        image.setflags(write=False)
+
+        tensor = image_to_tensor(image)
+
+        self.assertIsInstance(tensor, torch.Tensor)
+        self.assertEqual(tuple(tensor.shape), (3, 2, 3))
+        self.assertEqual(tensor.dtype, torch.float32)

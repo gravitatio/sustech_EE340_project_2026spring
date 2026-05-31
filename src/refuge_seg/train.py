@@ -64,7 +64,7 @@ def run_epoch(model, loader, criterion, optimizer, scaler, device, num_classes, 
         images = batch["image"].to(device, non_blocking=True)
         masks = batch["mask"].to(device, non_blocking=True)
         with torch.set_grad_enabled(train):
-            with torch.cuda.amp.autocast(enabled=scaler is not None):
+            with torch.amp.autocast(device_type=device.type, enabled=scaler is not None):
                 logits = model(images)
                 loss = criterion(logits, masks)
             if train:
@@ -106,7 +106,7 @@ def train_from_config(config: dict[str, Any]) -> None:
     criterion = build_loss(train_cfg["loss"], num_classes=num_classes, topology_weight=float(train_cfg.get("topology_weight", 0.0)))
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(train_cfg["lr"]), weight_decay=float(train_cfg.get("weight_decay", 0.01)))
     scheduler = build_scheduler(optimizer, config, len(train_loader))
-    scaler = torch.cuda.amp.GradScaler() if bool(train_cfg.get("amp", True)) and device.type == "cuda" else None
+    scaler = torch.amp.GradScaler("cuda") if bool(train_cfg.get("amp", True)) and device.type == "cuda" else None
 
     rows = []
     best = -1.0

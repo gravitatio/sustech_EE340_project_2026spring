@@ -33,6 +33,11 @@ def classes_to_mask_values(classes: np.ndarray) -> np.ndarray:
     return result
 
 
+def image_to_tensor(image: np.ndarray) -> torch.Tensor:
+    image = np.array(image, copy=True)
+    return torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
+
+
 @dataclass(frozen=True)
 class RefugeSample:
     image: torch.Tensor
@@ -67,7 +72,7 @@ class RefugeDataset(Dataset):
         image_path = self.images[index]
         image = Image.open(image_path).convert("RGB")
         image = image.resize((self.image_size, self.image_size), Image.BILINEAR)
-        image_tensor = torch.from_numpy(np.asarray(image).transpose(2, 0, 1)).float() / 255.0
+        image_tensor = image_to_tensor(np.asarray(image))
 
         item: dict[str, torch.Tensor | str] = {
             "image": image_tensor,
@@ -77,7 +82,6 @@ class RefugeDataset(Dataset):
             mask_path = self.mask_dir / f"{image_path.stem}.bmp"
             mask = Image.open(mask_path).convert("L")
             mask = mask.resize((self.image_size, self.image_size), Image.NEAREST)
-            mask_tensor = torch.from_numpy(mask_values_to_classes(np.asarray(mask))).long()
+            mask_tensor = torch.from_numpy(mask_values_to_classes(np.array(mask, copy=True))).long()
             item["mask"] = mask_tensor
         return item
-
